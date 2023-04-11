@@ -1,0 +1,18 @@
+[package]
+name = "expenses-project-tui"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+termion = "2.0.1"
+crossterm = "0.25"
+tui = { version = "0.19.0", features = ["crossterm", "termion"], default-features = false }
+serde_json = "1.0.95"
+serde = { version = "*", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.11.16", features = ["json"] }
+chrono = "0.4.24"
+bcrypt = "0.14.0"
+tui-tree-widget = "0.11.0"
