@@ -26,7 +26,7 @@ pub async fn login(
   if response.status() == StatusCode::INTERNAL_SERVER_ERROR {
     return Err(Box::new(CustomError::new(
       Some(""),
-      Some(String::from("Error to create user")),
+      Some(String::from("Error to login")),
       None,
     )));
   }

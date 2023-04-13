@@ -6,7 +6,14 @@ use reqwest::{
 };
 use serde::{Serialize, Deserialize};
 
-use crate::{models::custom_error::CustomError, types::responses::response::CustomResponse};
+use crate::{
+  models::{
+    custom_error::CustomError,
+    transaction::TransactionModel,
+  },
+  enums::{transaction_type::TransactionType, month::MonthEnum},
+  types::responses::response::CustomResponse,
+};
 
 use super::get_url;
 
@@ -20,7 +27,7 @@ pub struct MonthByYear {
 
 pub async fn get_month_by_year(
   client: &reqwest::Client,
-  user_token: String,
+  user_token: &String,
 ) -> Result<Vec<MonthByYear>, Box<dyn Error>> {
   let url: Url = get_url("/transactions/month-by-years");
 
@@ -33,7 +40,7 @@ pub async fn get_month_by_year(
   if response.status() == StatusCode::INTERNAL_SERVER_ERROR {
     return Err(Box::new(CustomError::new(
       Some(""),
-      Some(String::from("Error to create user")),
+      Some(String::from("Error to get months")),
       None,
     )));
   }
@@ -70,5 +77,61 @@ pub async fn get_month_by_year(
     .map(|(year, months)| MonthByYear { year, months })
     .collect();
 
-  return Ok(month_by_year);
+  Ok(month_by_year)
+}
+
+pub async fn get_transactions_by_month_and_type(
+  client: &reqwest::Client,
+  user_token: &String,
+  transaction_type: TransactionType,
+  month: MonthEnum,
+) -> Result<Vec<TransactionModel>, Box<dyn Error>> {
+  let url: Url = get_url("/transactions");
+
+  let query: Vec<(&str, String)> = vec![
+    ("type", String::from(transaction_type)),
+    ("month", String::from(month)),
+  ];
+
+  let cookie_header = HeaderValue::from_str(&format!("token={}", user_token))?;
+  let mut header = HeaderMap::new();
+  header.insert(COOKIE, cookie_header);
+
+  let response = client.get(url).headers(header).query(&query).send().await?;
+
+  if response.status() == StatusCode::INTERNAL_SERVER_ERROR {
+    return Err(Box::new(CustomError::new(
+      Some(""),
+      Some(String::from("Error to get transactions")),
+      None,
+    )));
+  }
+
+  if response.status() != StatusCode::OK {
+    let body = response.json::<CustomResponse<String>>().await?;
+
+    return Err(Box::new(CustomError::new(
+      if body.data.is_some() {
+        Some(body.data)
+      } else {
+        None
+      },
+      if body.message.is_some() {
+        Some(body.message.unwrap())
+      } else {
+        None
+      },
+      if body.show_message.is_some() {
+        Some(body.show_message.unwrap())
+      } else {
+        None
+      },
+    )));
+  }
+
+  let data: CustomResponse<Vec<TransactionModel>> = response
+    .json::<CustomResponse<Vec<TransactionModel>>>()
+    .await?;
+
+  Ok(data.data.unwrap().into_iter().collect())
 }
