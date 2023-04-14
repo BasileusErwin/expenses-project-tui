@@ -5,9 +5,9 @@ use crate::types::responses::response::ShowMessage;
 
 #[derive(Debug)]
 pub struct CustomError<T: Debug> {
-  data: Option<T>,
-  message: Option<String>,
-  show_message: Option<ShowMessage>,
+  pub data: Option<T>,
+  pub message: Option<String>,
+  pub show_message: Option<ShowMessage>,
 }
 
 impl<T: Debug> CustomError<T> {
@@ -30,8 +30,8 @@ impl<T: Debug> Display for CustomError<T> {
       Some(show_message) => write!(f, "{:?}", show_message.en),
       None => match &self.message {
         Some(data) => write!(f, "{:?}", data),
-        None => write!(f, "{:?}", "Generic error")
-      }
+        None => write!(f, "{:?}", "Generic error"),
+      },
     }
   }
 }

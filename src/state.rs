@@ -1,25 +1,26 @@
-use std::vec;
+use std::{vec, result};
 use crate::{
-  enums::{selected_block::SelectedBlock, currency::CurrencyEnum},
-  requests::transaction::MonthByYear,
-  utils::*,
-  models::transaction::{TransactionModel, self},
+  enums::selected_block::{SelectedBlock, self},
+  requests::transaction::{MonthByYear, get_transactions_balances},
+  utils::{*, transaction_utils::sort},
+  models::transaction::TransactionModel,
+  types::responses::transaction::TransactionBalances,
+  ui::get_transactions,
 };
-use crossterm::event::KeyCode;
+use crossterm::event::{KeyCode, ModifierKeyCode};
 use tui::widgets::TableState;
 use tui_tree_widget::TreeItem;
+
+#[derive(Debug)]
+pub enum SortMode {
+  ASC,
+  DESC,
+}
 
 #[derive(Debug)]
 pub struct TransactionsTableState {
   pub state: TableState,
   pub items: Vec<Vec<String>>,
-}
-
-pub struct TransactionTotal {
-  pub total: f64,
-  pub uyu: f64,
-  pub usd: f64,
-  pub eur: f64,
 }
 
 pub struct App<'a> {
@@ -31,16 +32,18 @@ pub struct App<'a> {
   pub expenses_table: TransactionsTableState,
   pub savings_table: TransactionsTableState,
   pub transactions_header: Vec<&'static str>,
-  pub incomes_total: TransactionTotal,
-  pub expenses_total: TransactionTotal,
-  pub savings_total: TransactionTotal,
+  pub summary: TransactionBalances,
+  pub months_by_year: Vec<MonthByYear>,
+  pub client: reqwest::Client,
 }
 
-pub struct DataTable {
+pub struct DataTable<'a> {
   pub months_by_year: Vec<MonthByYear>,
   pub expenses: Vec<TransactionModel>,
   pub incomes: Vec<TransactionModel>,
   pub savings: Vec<TransactionModel>,
+  pub summary: TransactionBalances,
+  pub tree: StatefulTree<'a>,
 }
 
 fn get_transactions_row(transaction: Vec<TransactionModel>) -> Vec<Vec<String>> {
@@ -57,25 +60,23 @@ fn get_transactions_row(transaction: Vec<TransactionModel>) -> Vec<Vec<String>> 
           Some(note) => note.to_string(),
           None => "".to_string(),
         },
+        // match &expense.category {
+        //   Some(category) => {
+        //     if category.name.len() > 15 {
+        //       wrap_text(&category.name, 15)
+        //     } else {
+        //       category.name.to_string()
+        //     }
+        //   }
+        //   None => "".to_string(),
+        // },
       ]
     })
     .collect()
 }
 
 impl<'a> App<'a> {
-  pub fn new(data_table: DataTable, user_token: String) -> App<'a> {
-    let mut tree_items: Vec<TreeItem> = Vec::new();
-
-    for item in data_table.months_by_year {
-      let mut months: Vec<TreeItem> = Vec::new();
-
-      for month in item.months {
-        months.push(TreeItem::new_leaf(month));
-      }
-
-      tree_items.push(TreeItem::new(item.year, months));
-    }
-
+  pub fn new(data_table: DataTable<'a>, user_token: String, client: reqwest::Client) -> App<'a> {
     let expenses_table = TransactionsTableState {
       state: TableState::default(),
       items: get_transactions_row(data_table.expenses),
@@ -91,117 +92,18 @@ impl<'a> App<'a> {
       items: get_transactions_row(data_table.savings),
     };
 
-    let mut savings_total: TransactionTotal = TransactionTotal {
-      total: 0.0,
-      uyu: 0.0,
-      usd: 0.0,
-      eur: 0.0,
-    };
-
-    let mut incomes_total: TransactionTotal = TransactionTotal {
-      total: 0.0,
-      uyu: 0.0,
-      usd: 0.0,
-      eur: 0.0,
-    };
-
-    let mut expenses_total: TransactionTotal = TransactionTotal {
-      total: 0.0,
-      uyu: 0.0,
-      usd: 0.0,
-      eur: 0.0,
-    };
-
-    // for data in data_table.savings {
-    //   match data.currency {
-    //     CurrencyEnum::UYU => savings_total.uyu += data.amount,
-    //     CurrencyEnum::USD => {
-    //       savings_total.usd += data.amount;
-    //       match data.exchange_rate {
-    //         Some(exchange_rate) => {
-    //           savings_total.total += data.amount * exchange_rate.parse::<f64>().unwrap_or(1.0)
-    //         }
-    //         None => (),
-    //       }
-    //     }
-    //     CurrencyEnum::EUR => {
-    //       savings_total.eur += data.amount;
-    //       match data.exchange_rate {
-    //         Some(exchange_rate) => {
-    //           savings_total.total += data.amount * exchange_rate.parse::<f64>().unwrap_or(1.0)
-    //         }
-    //         None => (),
-    //       }
-    //     }
-    //   }
-    //
-    //   savings_total.total += savings_total.total;
-    // }
-    //
-    // data_table.incomes.iter().for_each(|data| {
-    //   match data.currency {
-    //     CurrencyEnum::UYU => incomes_total.uyu += data.amount,
-    //     CurrencyEnum::USD => {
-    //       savings_total.usd += data.amount;
-    //       match data.exchange_rate {
-    //         Some(exchange_rate) => {
-    //           incomes_total.total += data.amount * exchange_rate.parse::<f64>().unwrap_or(1.0)
-    //         }
-    //         None => (),
-    //       }
-    //     }
-    //     CurrencyEnum::EUR => {
-    //       savings_total.eur += data.amount;
-    //       match data.exchange_rate {
-    //         Some(exchange_rate) => {
-    //           incomes_total.total += data.amount * exchange_rate.parse::<f64>().unwrap_or(1.0)
-    //         }
-    //         None => (),
-    //       }
-    //     }
-    //   }
-    //
-    //   incomes_total.total += incomes_total.total;
-    // });
-    //
-    // for data in data_table.expenses.iter() {
-    //   match data.currency {
-    //     CurrencyEnum::UYU => expenses_total.uyu += data.amount,
-    //     CurrencyEnum::USD => {
-    //       savings_total.usd += data.amount;
-    //       match data.exchange_rate {
-    //         Some(exchange_rate) => {
-    //           expenses_total.total += data.amount * exchange_rate.parse::<f64>().unwrap_or(1.0)
-    //         }
-    //         None => (),
-    //       }
-    //     }
-    //     CurrencyEnum::EUR => {
-    //       savings_total.eur += data.amount;
-    //       match data.exchange_rate {
-    //         Some(exchange_rate) => {
-    //           expenses_total.total += data.amount * exchange_rate.parse::<f64>().unwrap_or(1.0)
-    //         }
-    //         None => (),
-    //       }
-    //     }
-    //   }
-    //
-    //   incomes_total.total += incomes_total.total;
-    // }
-
     Self {
-      tree: StatefulTree::with_items(tree_items.clone()),
+      client,
+      months_by_year: data_table.months_by_year,
+      tree: data_table.tree,
       selected_block: SelectedBlock::Months,
       user_token,
       is_navigation: true,
       incomes_table,
       expenses_table,
       savings_table,
-      transactions_header: vec!["Day", "Amount", "Category"],
-      savings_total,
-      incomes_total,
-      expenses_total,
+      transactions_header: vec!["Day", "Amount", "Note"],
+      summary: data_table.summary,
     }
   }
 
@@ -309,8 +211,7 @@ impl<'a> App<'a> {
 
   fn select_next_block(&mut self) {
     self.selected_block = match self.selected_block {
-      SelectedBlock::Months => SelectedBlock::Summary,
-      SelectedBlock::Summary => SelectedBlock::Incomes,
+      SelectedBlock::Months => SelectedBlock::Incomes,
       SelectedBlock::Incomes => SelectedBlock::Expenses,
       SelectedBlock::Expenses => SelectedBlock::Savings,
       SelectedBlock::Savings => SelectedBlock::Months,
@@ -320,14 +221,13 @@ impl<'a> App<'a> {
   fn select_previous_block(&mut self) {
     self.selected_block = match self.selected_block {
       SelectedBlock::Months => SelectedBlock::Savings,
-      SelectedBlock::Summary => SelectedBlock::Months,
-      SelectedBlock::Incomes => SelectedBlock::Summary,
+      SelectedBlock::Incomes => SelectedBlock::Months,
       SelectedBlock::Expenses => SelectedBlock::Incomes,
       SelectedBlock::Savings => SelectedBlock::Expenses,
     };
   }
 
-  pub fn process_key_event(&mut self, key_code: KeyCode) {
+  pub async fn process_key_event(&mut self, key_code: KeyCode) {
     match key_code {
       KeyCode::Char('j') => {
         if self.is_navigation {
@@ -339,7 +239,46 @@ impl<'a> App<'a> {
           self.select_previous_block()
         }
       }
-      KeyCode::Char('\n' | ' ') => self.tree.toggle(),
+      KeyCode::Enter => {
+        if self.selected_block == SelectedBlock::Months {
+          self.tree.toggle(&self.months_by_year);
+
+          let transactions = get_transactions(&self.client, &self.user_token, &self.tree).await;
+
+          match transactions {
+            Ok(mut result) => {
+              transaction_utils::sort(&mut result.0);
+              transaction_utils::sort(&mut result.1);
+              transaction_utils::sort(&mut result.2);
+
+              self.expenses_table = TransactionsTableState {
+                state: self.expenses_table.state.clone(),
+                items: get_transactions_row(result.0),
+              };
+              self.incomes_table = TransactionsTableState {
+                state: self.incomes_table.state.clone(),
+                items: get_transactions_row(result.1),
+              };
+              self.savings_table = TransactionsTableState {
+                state: self.incomes_table.state.clone(),
+                items: get_transactions_row(result.2),
+              };
+
+              match get_transactions_balances(
+                &self.client,
+                &self.user_token,
+                self.tree.current_month.clone(),
+              )
+              .await
+              {
+                Ok(data) => self.summary = data,
+                Err(_) => println!("errr"),
+              };
+            }
+            Err(_) => println!("error"),
+          }
+        }
+      }
       KeyCode::Left => {
         if self.selected_block == SelectedBlock::Months {
           self.tree.left()
@@ -355,15 +294,17 @@ impl<'a> App<'a> {
         SelectedBlock::Incomes | SelectedBlock::Expenses | SelectedBlock::Savings => {
           self.next_table_item()
         }
-        _ => {}
       },
       KeyCode::Up => match self.selected_block {
         SelectedBlock::Months => self.tree.up(),
         SelectedBlock::Incomes | SelectedBlock::Expenses | SelectedBlock::Savings => {
           self.previous_table_item()
         }
-        _ => {}
       },
+      KeyCode::Char('m') => self.selected_block = SelectedBlock::Months,
+      KeyCode::Char('e') => self.selected_block = SelectedBlock::Expenses,
+      KeyCode::Char('i') => self.selected_block = SelectedBlock::Incomes,
+      KeyCode::Char('s') => self.selected_block = SelectedBlock::Savings,
       _ => {}
     }
   }

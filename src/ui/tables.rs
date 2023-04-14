@@ -4,7 +4,7 @@ use tui::{
   backend::Backend,
   Frame,
   widgets::{Table, Row, Cell},
-  style::{Style, Color},
+  style::Style,
   layout::{Constraint, Rect},
   text::Span,
 };
@@ -12,18 +12,12 @@ use tui::{
 use super::blocks::create_block;
 
 pub fn create_incomes_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chunk: Rect) {
-  let selected_style = Style::default()
-    .bg(GREY)
-    .fg(YELLOW);
+  let selected_style = Style::default().bg(GREY).fg(YELLOW);
 
   let header_cells = app.transactions_header.iter().map(|h| Cell::from(*h));
 
   let header = Row::new(header_cells)
-    .style(
-      Style::default()
-        .fg(BACKGROUND)
-        .bg(GREEN),
-    )
+    .style(Style::default().fg(BACKGROUND).bg(GREEN))
     .height(1)
     .bottom_margin(1);
 
@@ -51,28 +45,25 @@ pub fn create_incomes_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chu
     .block(block)
     .highlight_style(selected_style)
     .highlight_symbol("")
-    .widths(&[
-      Constraint::Length(20),
-      Constraint::Length(20),
-      Constraint::Length(20),
-    ]);
+    .widths(
+      [
+        Constraint::Length(4),
+        Constraint::Length(15),
+        Constraint::Length(30),
+      ]
+      .as_ref(),
+    );
 
   frame.render_stateful_widget(table, chunk, &mut app.incomes_table.state);
 }
 
 pub fn create_expenses_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chunk: Rect) {
-  let selected_style = Style::default()
-    .bg(GREY)
-    .fg(YELLOW);
+  let selected_style = Style::default().bg(GREY).fg(YELLOW);
 
   let header_cells = app.transactions_header.iter().map(|h| Cell::from(*h));
 
   let header = Row::new(header_cells)
-    .style(
-      Style::default()
-        .fg(BACKGROUND)
-        .bg(RED),
-    )
+    .style(Style::default().fg(BACKGROUND).bg(RED))
     .height(1)
     .bottom_margin(1);
 
@@ -100,28 +91,25 @@ pub fn create_expenses_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, ch
     .block(block)
     .highlight_style(selected_style)
     .highlight_symbol("")
-    .widths(&[
-      Constraint::Length(20),
-      Constraint::Length(20),
-      Constraint::Length(20),
-    ]);
+    .widths(
+      [
+        Constraint::Length(4),
+        Constraint::Length(15),
+        Constraint::Length(30),
+      ]
+      .as_ref(),
+    );
 
   frame.render_stateful_widget(table, chunk, &mut app.expenses_table.state);
 }
 
 pub fn create_savings_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chunk: Rect) {
-  let selected_style = Style::default()
-    .bg(GREY)
-    .fg(YELLOW);
+  let selected_style = Style::default().bg(GREY).fg(YELLOW);
 
   let header_cells = app.transactions_header.iter().map(|h| Cell::from(*h));
 
   let header = Row::new(header_cells)
-    .style(
-      Style::default()
-        .fg(BACKGROUND)
-        .bg(FOREGROUND),
-    )
+    .style(Style::default().fg(BACKGROUND).bg(FOREGROUND))
     .height(1)
     .bottom_margin(1);
 
@@ -149,11 +137,14 @@ pub fn create_savings_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chu
     .block(block)
     .highlight_style(selected_style)
     .highlight_symbol("")
-    .widths(&[
-      Constraint::Length(20),
-      Constraint::Length(20),
-      Constraint::Length(20),
-    ]);
+    .widths(
+      [
+        Constraint::Length(4),
+        Constraint::Length(15),
+        Constraint::Length(30),
+      ]
+      .as_ref(),
+    );
 
   frame.render_stateful_widget(table, chunk, &mut app.savings_table.state);
 }

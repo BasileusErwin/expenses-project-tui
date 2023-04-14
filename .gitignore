@@ -1,1 +1,4 @@
 /target
+config.json
+config.dev.json
+.env

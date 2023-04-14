@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 
 use crate::models::user::UserModel;
-use super::response::CustomResponse;
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]

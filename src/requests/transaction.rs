@@ -12,7 +12,7 @@ use crate::{
     transaction::TransactionModel,
   },
   enums::{transaction_type::TransactionType, month::MonthEnum},
-  types::responses::response::CustomResponse,
+  types::responses::{response::CustomResponse, transaction::TransactionBalances},
 };
 
 use super::get_url;
@@ -134,4 +134,59 @@ pub async fn get_transactions_by_month_and_type(
     .await?;
 
   Ok(data.data.unwrap().into_iter().collect())
+}
+
+pub async fn get_transactions_balances(
+  client: &reqwest::Client,
+  user_token: &String,
+  month: MonthEnum,
+) -> Result<TransactionBalances, Box<dyn Error>> {
+  let url: Url = get_url("/transactions");
+
+  let query: Vec<(&str, String)> = vec![
+    ("balance", String::from("true")),
+    ("month", String::from(month)),
+  ];
+
+  let cookie_header = HeaderValue::from_str(&format!("token={}", user_token))?;
+  let mut header = HeaderMap::new();
+  header.insert(COOKIE, cookie_header);
+
+  let response = client.get(url).headers(header).query(&query).send().await?;
+
+  if response.status() == StatusCode::INTERNAL_SERVER_ERROR {
+    return Err(Box::new(CustomError::new(
+      Some(""),
+      Some(String::from("Error to get transactions")),
+      None,
+    )));
+  }
+
+  if response.status() != StatusCode::OK {
+    let body = response.json::<CustomResponse<String>>().await?;
+
+    return Err(Box::new(CustomError::new(
+      if body.data.is_some() {
+        Some(body.data)
+      } else {
+        None
+      },
+      if body.message.is_some() {
+        Some(body.message.unwrap())
+      } else {
+        None
+      },
+      if body.show_message.is_some() {
+        Some(body.show_message.unwrap())
+      } else {
+        None
+      },
+    )));
+  }
+
+  let data: CustomResponse<TransactionBalances> = response
+    .json::<CustomResponse<TransactionBalances>>()
+    .await?;
+
+  Ok(data.data.unwrap())
 }

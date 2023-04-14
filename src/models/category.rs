@@ -1,6 +1,6 @@
 use serde::{Serialize, Deserialize};
 
-use crate::enums::{month::MonthEnum, currency::CurrencyEnum, transaction_type::TransactionType};
+use crate::enums::transaction_type::TransactionType;
 
 use super::user::UserModel;
 
