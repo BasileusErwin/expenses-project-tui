@@ -1,17 +1,15 @@
-use crate::{state::App, enums::selected_block::SelectedBlock, colors::*};
-
+use crate::{states::App, enums::selected_block::SelectedBlock};
 use tui::{
-  backend::Backend,
-  Frame,
   widgets::{Table, Row, Cell},
   style::Style,
-  layout::{Constraint, Rect},
+  layout::Constraint,
   text::Span,
 };
 
+use super::colors::*;
 use super::blocks::create_block;
 
-pub fn create_incomes_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chunk: Rect) {
+pub fn create_incomes_table<'a>(app: &mut App<'a>) -> Table<'a> {
   let selected_style = Style::default().bg(GREY).fg(YELLOW);
 
   let header_cells = app.transactions_header.iter().map(|h| Cell::from(*h));
@@ -21,7 +19,7 @@ pub fn create_incomes_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chu
     .height(1)
     .bottom_margin(1);
 
-  let rows = app.incomes_table.items.iter().map(|item| {
+  let rows = app.table_state.incomes.items.iter().map(|item| {
     let height = item
       .iter()
       .map(|content| content.chars().filter(|c| *c == '\n').count())
@@ -40,7 +38,7 @@ pub fn create_incomes_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chu
     GREEN,
   );
 
-  let table = Table::new(rows)
+  Table::new(rows)
     .header(header)
     .block(block)
     .highlight_style(selected_style)
@@ -52,12 +50,12 @@ pub fn create_incomes_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chu
         Constraint::Length(30),
       ]
       .as_ref(),
-    );
-
-  frame.render_stateful_widget(table, chunk, &mut app.incomes_table.state);
+    )
 }
 
-pub fn create_expenses_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chunk: Rect) {
+pub fn create_expenses_table<'a>(
+  app: &mut App<'a>,
+) -> Table<'a> {
   let selected_style = Style::default().bg(GREY).fg(YELLOW);
 
   let header_cells = app.transactions_header.iter().map(|h| Cell::from(*h));
@@ -67,7 +65,7 @@ pub fn create_expenses_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, ch
     .height(1)
     .bottom_margin(1);
 
-  let rows = app.expenses_table.items.iter().map(|item| {
+  let rows = app.table_state.expenses.items.iter().map(|item| {
     let height = item
       .iter()
       .map(|content| content.chars().filter(|c| *c == '\n').count())
@@ -86,7 +84,7 @@ pub fn create_expenses_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, ch
     RED,
   );
 
-  let table = Table::new(rows)
+  Table::new(rows)
     .header(header)
     .block(block)
     .highlight_style(selected_style)
@@ -98,12 +96,10 @@ pub fn create_expenses_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, ch
         Constraint::Length(30),
       ]
       .as_ref(),
-    );
-
-  frame.render_stateful_widget(table, chunk, &mut app.expenses_table.state);
+    )
 }
 
-pub fn create_savings_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chunk: Rect) {
+pub fn create_savings_table<'a>(app: &mut App<'a>) -> Table<'a> {
   let selected_style = Style::default().bg(GREY).fg(YELLOW);
 
   let header_cells = app.transactions_header.iter().map(|h| Cell::from(*h));
@@ -113,7 +109,7 @@ pub fn create_savings_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chu
     .height(1)
     .bottom_margin(1);
 
-  let rows = app.savings_table.items.iter().map(|item| {
+  let rows = app.table_state.savings.items.iter().map(|item| {
     let height = item
       .iter()
       .map(|content| content.chars().filter(|c| *c == '\n').count())
@@ -132,7 +128,7 @@ pub fn create_savings_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chu
     FOREGROUND,
   );
 
-  let table = Table::new(rows)
+  Table::new(rows)
     .header(header)
     .block(block)
     .highlight_style(selected_style)
@@ -144,7 +140,5 @@ pub fn create_savings_table<B: Backend>(app: &mut App, frame: &mut Frame<B>, chu
         Constraint::Length(30),
       ]
       .as_ref(),
-    );
-
-  frame.render_stateful_widget(table, chunk, &mut app.savings_table.state);
+    )
 }

@@ -4,7 +4,7 @@ use crate::enums::transaction_type::TransactionType;
 
 use super::user::UserModel;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CategoryModel {
   pub category_id: String,

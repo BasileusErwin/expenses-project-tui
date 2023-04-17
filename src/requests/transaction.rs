@@ -4,26 +4,18 @@ use reqwest::{
   Url, StatusCode,
   header::{HeaderValue, COOKIE, HeaderMap},
 };
-use serde::{Serialize, Deserialize};
-
 use crate::{
-  models::{
-    custom_error::CustomError,
-    transaction::TransactionModel,
-  },
+  models::{custom_error::CustomError, transaction::TransactionModel},
   enums::{transaction_type::TransactionType, month::MonthEnum},
-  types::responses::{response::CustomResponse, transaction::TransactionBalances},
+  types::responses::{
+    response::CustomResponse,
+    transaction::{TransactionBalances, MonthByYear, GetTotalSaving},
+  },
 };
 
 use super::get_url;
 
 pub type MonthByYearMap = HashMap<String, Vec<String>>;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct MonthByYear {
-  pub year: String,
-  pub months: Vec<String>,
-}
 
 pub async fn get_month_by_year(
   client: &reqwest::Client,
@@ -189,4 +181,52 @@ pub async fn get_transactions_balances(
     .await?;
 
   Ok(data.data.unwrap())
+}
+
+pub async fn get_total_saving(
+  client: &reqwest::Client,
+  user_token: &String,
+) -> Result<f64, Box<dyn Error>> {
+  let url: Url = get_url("/transactions/total-saving");
+
+  let cookie_header = HeaderValue::from_str(&format!("token={}", user_token))?;
+  let mut header = HeaderMap::new();
+  header.insert(COOKIE, cookie_header);
+
+  let response = client.get(url).headers(header).send().await?;
+
+  if response.status() == StatusCode::INTERNAL_SERVER_ERROR {
+    return Err(Box::new(CustomError::new(
+      Some(""),
+      Some(String::from("Error to get transactions")),
+      None,
+    )));
+  }
+
+  if response.status() != StatusCode::OK {
+    let body = response.json::<CustomResponse<String>>().await?;
+
+    return Err(Box::new(CustomError::new(
+      if body.data.is_some() {
+        Some(body.data)
+      } else {
+        None
+      },
+      if body.message.is_some() {
+        Some(body.message.unwrap())
+      } else {
+        None
+      },
+      if body.show_message.is_some() {
+        Some(body.show_message.unwrap())
+      } else {
+        None
+      },
+    )));
+  }
+
+  let data: CustomResponse<GetTotalSaving> =
+    response.json::<CustomResponse<GetTotalSaving>>().await?;
+
+  Ok(data.data.unwrap().total_savings.round())
 }

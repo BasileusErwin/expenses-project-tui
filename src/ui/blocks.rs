@@ -2,8 +2,8 @@ use tui::{
   widgets::{Block, Borders, BorderType},
   style::{Style, Color},
 };
-
-use crate::{enums::selected_block::SelectedBlock, colors::*};
+use super::colors::*;
+use crate::enums::selected_block::SelectedBlock;
 
 pub fn create_block<'a>(
   title: String,

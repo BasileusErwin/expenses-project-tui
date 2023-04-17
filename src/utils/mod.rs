@@ -1,7 +1,7 @@
 use chrono::{Local, Datelike};
 use tui_tree_widget::{TreeItem, TreeState};
 
-use crate::{enums::month::MonthEnum, requests::transaction::MonthByYear};
+use crate::{enums::month::MonthEnum, types::responses::transaction::MonthByYear};
 
 pub mod transaction_utils;
 
@@ -63,7 +63,7 @@ impl<'a> StatefulTree<'a> {
     self.state.key_right();
   }
 
-  pub fn toggle(&mut self, months_by_year: &Vec<MonthByYear>) {
+  pub fn toggle(&mut self, months_by_year: &[MonthByYear]) {
     self.state.toggle_selected();
 
     let selected = self.state.selected();

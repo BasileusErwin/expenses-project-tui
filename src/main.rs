@@ -18,14 +18,13 @@ use types::Config;
 
 use crate::requests::health;
 
-pub mod colors;
 pub mod enums;
 pub mod models;
 pub mod requests;
-pub mod state;
 pub mod types;
 pub mod ui;
 pub mod utils;
+pub mod states;
 
 fn load_config() -> io::Result<Config> {
   let path = match env::var("ENV") {
@@ -58,7 +57,7 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
 
   terminal::enable_raw_mode()?;
   let mut stdout = io::stdout();
-  execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+  execute!(stdout, EnterAlternateScreen)?;
   let backend = CrosstermBackend::new(stdout);
   let mut terminal = Terminal::new(backend)?;
 
@@ -68,7 +67,6 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
   execute!(
     terminal.backend_mut(),
     LeaveAlternateScreen,
-    DisableMouseCapture
   )?;
 
   terminal.show_cursor()?;

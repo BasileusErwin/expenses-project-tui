@@ -4,5 +4,7 @@ pub enum SelectedBlock {
   Incomes,
   Savings,
   Expenses,
+  Tabs,
+  Details,
 }
 

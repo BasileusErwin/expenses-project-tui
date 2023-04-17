@@ -1,10 +1,8 @@
 use serde::{Serialize, Deserialize};
-
 use crate::enums::{month::MonthEnum, currency::CurrencyEnum, transaction_type::TransactionType};
-
 use super::{user::UserModel, category::CategoryModel};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct TransactionModel {
   pub transaction_id: String,

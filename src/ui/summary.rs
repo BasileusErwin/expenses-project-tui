@@ -7,10 +7,8 @@ use tui::{
   text::Spans,
 };
 
-use crate::{
-  state::App,
-  colors::{BACKGROUND, YELLOW},
-};
+use super::colors::{BACKGROUND, YELLOW};
+use crate::states::App;
 
 pub fn create_summeries<B: Backend>(app: &mut App, frame: &mut Frame<B>, layout: Vec<Rect>) {
   let incomes = Block::default()
@@ -56,10 +54,13 @@ pub fn create_summeries<B: Backend>(app: &mut App, frame: &mut Frame<B>, layout:
     Spans::from(format!("EUR: ${}", &app.summary.savings.eur)),
   ];
 
-  let current_money_span = vec![Spans::from(format!(
-    "Total: ${} UYU",
-    (app.summary.incomes.total - app.summary.expenses.total).round()
-  ))];
+  let current_money_span = vec![
+    Spans::from(format!(
+      "Current Money: ${} UYU",
+      (app.summary.incomes.total - app.summary.expenses.total - app.summary.savings.total).round()
+    )),
+    Spans::from(format!("Total Savings: ${} USD", &app.total_saving)),
+  ];
 
   let incomes_paragraph = Paragraph::new(incomes_span)
     .block(incomes)

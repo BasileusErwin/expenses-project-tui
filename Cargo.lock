@@ -292,7 +292,7 @@ dependencies = [
  "termion 2.0.1",
  "tokio",
  "tui",
- "tui-textarea",
+ "tui-input",
  "tui-tree-widget",
 ]
 
@@ -1300,13 +1300,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "tui-textarea"
-version = "0.2.0"
+name = "tui-input"
+version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "437ad97a57d66f7231dab16f51ede1ff5a3aac68c83eb10fa3a178e454b63cae"
+checksum = "40419b12b152aaa1a295741903c9b6253e66ef07e0630e2e2503c736f280fdde"
 dependencies = [
- "crossterm",
- "tui",
+ "termion 2.0.1",
+ "unicode-width",
 ]
 
 [[package]]

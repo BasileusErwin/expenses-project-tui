@@ -1,7 +1,7 @@
 use std::convert::From;
 use serde::{Serialize, Deserialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum CurrencyEnum {
   USD,
   UYU,

@@ -1,11 +1,10 @@
 use std::{time::Duration, error};
 use crate::{
-  colors::*,
   load_config,
   models::{custom_error::CustomError, transaction::TransactionModel},
-  enums::{transaction_type::TransactionType, month::MonthEnum, selected_block::SelectedBlock},
+  enums::{transaction_type::TransactionType, selected_block::SelectedBlock},
   utils::{transaction_utils, StatefulTree},
-  state::{DataTable, App},
+  states::{App, DataTable},
 };
 use crossterm::event::{KeyCode, self, Event, poll};
 use tui::{
@@ -14,6 +13,7 @@ use tui::{
   Frame,
   style::Style,
   layout::{Layout, Direction, Constraint},
+  text::{Spans, Span},
 };
 use tui_tree_widget::{Tree, TreeItem};
 
@@ -23,11 +23,17 @@ use self::{
   blocks::create_block,
   tables::{create_expenses_table, create_savings_table, create_incomes_table},
   summary::create_summeries,
+  colors::*,
+  tabs::create_tabs,
+  paragraph::get_paragraph_to_details_transaction_details,
 };
 
 pub mod blocks;
+pub mod colors;
+pub mod paragraph;
 pub mod summary;
 pub mod tables;
+pub mod tabs;
 
 type TransactionsTuple = (
   Vec<TransactionModel>,
@@ -125,7 +131,10 @@ pub async fn run_app<B: Backend>(
   transaction_utils::sort(&mut transactions.1);
   transaction_utils::sort(&mut transactions.2);
 
-  let summary = transaction::get_transactions_balances(client, &token, tree.current_month.clone()).await?;
+  let summary =
+    transaction::get_transactions_balances(client, &token, tree.current_month.clone()).await?;
+
+  let total_saving = transaction::get_total_saving(client, &token).await?;
 
   let data: DataTable = DataTable {
     months_by_year,
@@ -134,6 +143,7 @@ pub async fn run_app<B: Backend>(
     savings: transactions.2,
     summary,
     tree,
+    total_saving,
   };
 
   let mut app: App = App::new(data, token, client.to_owned());
@@ -186,16 +196,6 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
     .constraints([Constraint::Length(30)].as_ref())
     .split(center_layout[0]);
 
-  let transactions_layout = Layout::default()
-    .direction(Direction::Horizontal)
-    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-    .split(center_layout[1]);
-
-  let transactions_icomes_layout = Layout::default()
-    .direction(Direction::Vertical)
-    .constraints([Constraint::Percentage(80), Constraint::Percentage(20)].as_ref())
-    .split(transactions_layout[1]);
-
   let summaries_layout = Layout::default()
     .direction(Direction::Horizontal)
     .constraints(
@@ -211,9 +211,133 @@ pub fn ui<B: Backend>(frame: &mut Frame<B>, app: &mut App) {
 
   create_summeries(app, frame, summaries_layout);
 
-  create_incomes_table(app, frame, transactions_icomes_layout[0]);
+  let titles: Vec<Spans> = app
+    .tabs
+    .titles
+    .iter()
+    .map(|title| Spans::from(vec![Span::styled(*title, Style::default().fg(YELLOW_LITE))]))
+    .collect();
 
-  create_savings_table(app, frame, transactions_icomes_layout[1]);
+  let tabs_layout = Layout::default()
+    .direction(Direction::Vertical)
+    .constraints([Constraint::Percentage(10), Constraint::Percentage(90)].as_ref())
+    .split(center_layout[1]);
 
-  create_expenses_table(app, frame, transactions_layout[0]);
+  let tabs = create_tabs(titles, app);
+
+  frame.render_widget(tabs, tabs_layout[0]);
+
+  let transactions_layout = Layout::default()
+    .direction(Direction::Horizontal)
+    .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+    .split(tabs_layout[1]);
+
+  let transactions_icomes_layout = Layout::default()
+    .direction(Direction::Vertical)
+    .constraints([Constraint::Percentage(80), Constraint::Percentage(20)].as_ref())
+    .split(transactions_layout[1]);
+
+  let expenses_table = create_expenses_table(app);
+  let incomes_table = create_incomes_table(app);
+  let saving_table = create_savings_table(app);
+
+  match app.tabs.index {
+    0 => {
+      frame.render_stateful_widget(
+        expenses_table,
+        transactions_layout[0],
+        &mut app.table_state.expenses.state,
+      );
+
+      frame.render_stateful_widget(
+        incomes_table,
+        transactions_icomes_layout[0],
+        &mut app.table_state.incomes.state,
+      );
+
+      frame.render_stateful_widget(
+        saving_table,
+        transactions_icomes_layout[1],
+        &mut app.table_state.savings.state,
+      );
+    }
+    1 => {
+      if app.details_shown {
+        match &app.table_state.transactions_details {
+          Some(transaction) => {
+            let paragraph =
+              get_paragraph_to_details_transaction_details(&app.selected_block, transaction, RED);
+            frame.render_widget(paragraph, transactions_layout[1]);
+
+            frame.render_stateful_widget(
+              expenses_table,
+              transactions_layout[0],
+              &mut app.table_state.expenses.state,
+            );
+          }
+          None => (),
+        }
+      } else {
+        frame.render_stateful_widget(
+          expenses_table,
+          tabs_layout[1],
+          &mut app.table_state.expenses.state,
+        );
+      }
+    }
+    2 => {
+      if app.details_shown {
+        match &app.table_state.transactions_details {
+          Some(transaction) => {
+            let paragraph =
+              get_paragraph_to_details_transaction_details(&app.selected_block, transaction, GREEN);
+
+            frame.render_widget(paragraph, transactions_layout[1]);
+
+            frame.render_stateful_widget(
+              incomes_table,
+              transactions_layout[0],
+              &mut app.table_state.incomes.state,
+            );
+          }
+          None => (),
+        }
+      } else {
+        frame.render_stateful_widget(
+          incomes_table,
+          tabs_layout[1],
+          &mut app.table_state.incomes.state,
+        );
+      }
+    }
+    3 => {
+      if app.details_shown {
+        match &app.table_state.transactions_details {
+          Some(transaction) => {
+            let paragraph = get_paragraph_to_details_transaction_details(
+              &app.selected_block,
+              transaction,
+              FOREGROUND,
+            );
+
+            frame.render_widget(paragraph, transactions_layout[1]);
+
+            frame.render_stateful_widget(
+              saving_table,
+              transactions_layout[0],
+              &mut app.table_state.savings.state,
+            );
+          }
+          None => (),
+        }
+      } else {
+        frame.render_stateful_widget(
+          saving_table,
+          tabs_layout[1],
+          &mut app.table_state.savings.state,
+        );
+      }
+    }
+    _ => (),
+  };
 }
