@@ -1,7 +1,7 @@
 use tui::widgets::TableState;
 
 use crate::{
-  enums::selected_block::{self, SelectedBlock},
+  enums::selected_block::SelectedBlock,
   models::transaction::TransactionModel,
 };
 

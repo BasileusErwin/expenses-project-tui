@@ -36,6 +36,7 @@ pub struct App<'a> {
   pub tabs: TabsState<'a>,
   pub details_shown: bool,
   pub total_saving: f64,
+  pub await_data: bool,
 }
 
 pub struct DataTable<'a> {
@@ -114,6 +115,59 @@ impl<'a> App<'a> {
       tabs: TabsState::default(),
       details_shown: false,
       total_saving: data_table.total_saving,
+      await_data: false,
+    }
+  }
+
+  pub async fn set_transactions(&mut self) {
+    if !self.await_data {
+      self.await_data = true;
+      let transactions = get_transactions(&self.client, &self.user_token, &self.tree).await;
+      let total_saving = transaction::get_total_saving(&self.client, &self.user_token).await;
+
+      match total_saving {
+        Ok(data) => {
+          self.total_saving = data;
+        }
+        Err(err) => println!("{:?}", err),
+      }
+
+      match transactions {
+        Ok(mut result) => {
+          transaction_utils::sort(&mut result.0);
+          transaction_utils::sort(&mut result.1);
+          transaction_utils::sort(&mut result.2);
+
+          self.table_state.expenses = CustomTableState {
+            state: self.table_state.expenses.state.clone(),
+            items: get_transactions_row(&result.0),
+          };
+          self.table_state.incomes = CustomTableState {
+            state: self.table_state.incomes.state.clone(),
+            items: get_transactions_row(&result.1),
+          };
+          self.table_state.savings = CustomTableState {
+            state: self.table_state.savings.state.clone(),
+            items: get_transactions_row(&result.2),
+          };
+
+          match transaction::get_transactions_balances(
+            &self.client,
+            &self.user_token,
+            self.tree.current_month.clone(),
+          )
+          .await
+          {
+            Ok(data) => self.summary = data,
+            Err(_) => println!("errr"),
+          };
+          self.await_data = false;
+        }
+        Err(_) => {
+          self.await_data = false;
+          println!("error");
+        }
+      }
     }
   }
 
@@ -242,41 +296,7 @@ impl<'a> App<'a> {
         }
         SelectedBlock::Months => {
           self.tree.toggle(&self.months_by_year);
-
-          let transactions = get_transactions(&self.client, &self.user_token, &self.tree).await;
-
-          match transactions {
-            Ok(mut result) => {
-              transaction_utils::sort(&mut result.0);
-              transaction_utils::sort(&mut result.1);
-              transaction_utils::sort(&mut result.2);
-
-              self.table_state.expenses = CustomTableState {
-                state: self.table_state.expenses.state.clone(),
-                items: get_transactions_row(&result.0),
-              };
-              self.table_state.incomes = CustomTableState {
-                state: self.table_state.incomes.state.clone(),
-                items: get_transactions_row(&result.1),
-              };
-              self.table_state.savings = CustomTableState {
-                state: self.table_state.savings.state.clone(),
-                items: get_transactions_row(&result.2),
-              };
-
-              match transaction::get_transactions_balances(
-                &self.client,
-                &self.user_token,
-                self.tree.current_month.clone(),
-              )
-              .await
-              {
-                Ok(data) => self.summary = data,
-                Err(err) => println!("{:?}", err),
-              };
-            }
-            Err(err) => println!("{:?}", err),
-          }
+          self.set_transactions().await;
         }
         _ => (),
       },
@@ -317,48 +337,7 @@ impl<'a> App<'a> {
         _ => (),
       },
       KeyCode::Char('r') => {
-        let transactions = get_transactions(&self.client, &self.user_token, &self.tree).await;
-        let total_saving = transaction::get_total_saving(&self.client, &self.user_token).await;
-
-        match total_saving {
-          Ok(data) => {
-            self.total_saving = data;
-          }
-          Err(err) => println!("{:?}", err),
-        }
-
-        match transactions {
-          Ok(mut result) => {
-            transaction_utils::sort(&mut result.0);
-            transaction_utils::sort(&mut result.1);
-            transaction_utils::sort(&mut result.2);
-
-            self.table_state.expenses = CustomTableState {
-              state: self.table_state.expenses.state.clone(),
-              items: get_transactions_row(&result.0),
-            };
-            self.table_state.incomes = CustomTableState {
-              state: self.table_state.incomes.state.clone(),
-              items: get_transactions_row(&result.1),
-            };
-            self.table_state.savings = CustomTableState {
-              state: self.table_state.savings.state.clone(),
-              items: get_transactions_row(&result.2),
-            };
-
-            match transaction::get_transactions_balances(
-              &self.client,
-              &self.user_token,
-              self.tree.current_month.clone(),
-            )
-            .await
-            {
-              Ok(data) => self.summary = data,
-              Err(_) => println!("errr"),
-            };
-          }
-          Err(_) => println!("error"),
-        }
+        self.set_transactions().await;
       }
       _ => {}
     }

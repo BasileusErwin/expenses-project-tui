@@ -8,7 +8,6 @@ use std::{
 use crossterm::{
   terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
   execute,
-  event::{EnableMouseCapture, DisableMouseCapture},
 };
 use tui::{
   Terminal,
