@@ -1,4 +1,4 @@
 {
   "userToken": "",
-  "url": "https://expenses-project.up.railway.app/api"
+  "url": "http://localhost:3000/api"
 }
