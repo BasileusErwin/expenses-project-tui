@@ -2,8 +2,8 @@ use reqwest::Url;
 
 use crate::load_config;
 
-pub mod health;
 pub mod auth;
+pub mod health;
 pub mod transaction;
 
 pub fn get_url(endpount: &str) -> Url {

@@ -19,11 +19,11 @@ pub type MonthByYearMap = HashMap<String, Vec<String>>;
 
 pub async fn get_month_by_year(
   client: &reqwest::Client,
-  user_token: &String,
+  session_id: &String,
 ) -> Result<Vec<MonthByYear>, Box<dyn Error>> {
   let url: Url = get_url("/transactions/month-by-years");
 
-  let cookie_header = HeaderValue::from_str(&format!("token={}", user_token))?;
+  let cookie_header = HeaderValue::from_str(&format!("sessionID={}", session_id))?;
   let mut header = HeaderMap::new();
   header.insert(COOKIE, cookie_header);
 
@@ -74,7 +74,7 @@ pub async fn get_month_by_year(
 
 pub async fn get_transactions_by_month_and_type(
   client: &reqwest::Client,
-  user_token: &String,
+  session_id: &String,
   transaction_type: TransactionType,
   month: MonthEnum,
 ) -> Result<Vec<TransactionModel>, Box<dyn Error>> {
@@ -85,7 +85,7 @@ pub async fn get_transactions_by_month_and_type(
     ("month", String::from(month)),
   ];
 
-  let cookie_header = HeaderValue::from_str(&format!("token={}", user_token))?;
+  let cookie_header = HeaderValue::from_str(&format!("sessionID={}", session_id))?;
   let mut header = HeaderMap::new();
   header.insert(COOKIE, cookie_header);
 
@@ -130,7 +130,7 @@ pub async fn get_transactions_by_month_and_type(
 
 pub async fn get_transactions_balances(
   client: &reqwest::Client,
-  user_token: &String,
+  session_id: &String,
   month: MonthEnum,
 ) -> Result<TransactionBalances, Box<dyn Error>> {
   let url: Url = get_url("/transactions");
@@ -140,7 +140,7 @@ pub async fn get_transactions_balances(
     ("month", String::from(month)),
   ];
 
-  let cookie_header = HeaderValue::from_str(&format!("token={}", user_token))?;
+  let cookie_header = HeaderValue::from_str(&format!("sessionID={}", session_id))?;
   let mut header = HeaderMap::new();
   header.insert(COOKIE, cookie_header);
 
@@ -185,11 +185,11 @@ pub async fn get_transactions_balances(
 
 pub async fn get_total_saving(
   client: &reqwest::Client,
-  user_token: &String,
+  session_id: &String,
 ) -> Result<f64, Box<dyn Error>> {
   let url: Url = get_url("/transactions/total-saving");
 
-  let cookie_header = HeaderValue::from_str(&format!("token={}", user_token))?;
+  let cookie_header = HeaderValue::from_str(&format!("sessionID={}", session_id))?;
   let mut header = HeaderMap::new();
   header.insert(COOKIE, cookie_header);
 

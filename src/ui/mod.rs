@@ -98,7 +98,7 @@ pub async fn run_app<B: Backend>(
     }
   };
 
-  let token = match config.user_token {
+  let token = match config.session_id {
     Some(token) => token,
     None => {
       return Err(Box::new(CustomError::new(

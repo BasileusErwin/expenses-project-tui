@@ -1,9 +1,6 @@
 use tui::widgets::TableState;
 
-use crate::{
-  enums::selected_block::SelectedBlock,
-  models::transaction::TransactionModel,
-};
+use crate::{enums::selected_block::SelectedBlock, models::transaction::TransactionModel};
 
 #[derive(Debug)]
 pub enum SortMode {

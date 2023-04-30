@@ -7,4 +7,3 @@ pub enum SelectedBlock {
   Tabs,
   Details,
 }
-

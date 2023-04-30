@@ -9,10 +9,7 @@ use crossterm::{
   terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
   execute,
 };
-use tui::{
-  Terminal,
-  backend::CrosstermBackend,
-};
+use tui::{Terminal, backend::CrosstermBackend};
 use types::Config;
 
 use crate::requests::health;
@@ -20,22 +17,22 @@ use crate::requests::health;
 pub mod enums;
 pub mod models;
 pub mod requests;
+pub mod states;
 pub mod types;
 pub mod ui;
 pub mod utils;
-pub mod states;
 
 fn load_config() -> io::Result<Config> {
   let home = env::var("HOME").unwrap();
   let path = match env::var("ENV") {
     Ok(env) => {
       if let "DEV" = &*env {
-        String::from( "config.dev.json")
+        String::from("config.dev.json")
       } else {
         format!("{}/.config/expenses/{}", home, "config.json")
       }
     }
-    Err(_) => format!("{}/.config/expenses/{}", home, "config.json")
+    Err(_) => format!("{}/.config/expenses/{}", home, "config.json"),
   };
 
   let file = File::open(path)?;
@@ -64,10 +61,7 @@ async fn main() -> Result<(), Box<dyn error::Error>> {
   let res = ui::run_app(&mut terminal, &client).await;
 
   terminal::disable_raw_mode()?;
-  execute!(
-    terminal.backend_mut(),
-    LeaveAlternateScreen,
-  )?;
+  execute!(terminal.backend_mut(), LeaveAlternateScreen,)?;
 
   terminal.show_cursor()?;
 

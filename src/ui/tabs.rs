@@ -1,11 +1,15 @@
 use tui::{
   widgets::Tabs,
-  text::Spans, style::{Style, Modifier, Color},
+  text::Spans,
+  style::{Style, Modifier, Color},
 };
 
 use crate::states::App;
 
-use super::{blocks::create_block, colors::{BLUE, CYAN}};
+use super::{
+  blocks::create_block,
+  colors::{BLUE, CYAN},
+};
 
 pub fn create_tabs<'a>(titles: Vec<Spans<'a>>, app: &App<'a>) -> Tabs<'a> {
   Tabs::new(titles)

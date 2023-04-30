@@ -8,4 +8,3 @@ pub struct CreateUserRequest {
   pub last_name: String,
   pub password: String,
 }
-

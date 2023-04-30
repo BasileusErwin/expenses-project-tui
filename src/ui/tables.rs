@@ -53,9 +53,7 @@ pub fn create_incomes_table<'a>(app: &mut App<'a>) -> Table<'a> {
     )
 }
 
-pub fn create_expenses_table<'a>(
-  app: &mut App<'a>,
-) -> Table<'a> {
+pub fn create_expenses_table<'a>(app: &mut App<'a>) -> Table<'a> {
   let selected_style = Style::default().bg(GREY).fg(YELLOW);
 
   let header_cells = app.transactions_header.iter().map(|h| Cell::from(*h));

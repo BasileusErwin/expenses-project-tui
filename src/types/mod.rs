@@ -1,11 +1,11 @@
 use serde::{Deserialize, Serialize};
 
-pub mod responses;
 pub mod request;
+pub mod responses;
 
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Config {
-  pub user_token: Option<String>,
-  pub url: String
+  pub session_id: Option<String>,
+  pub url: String,
 }

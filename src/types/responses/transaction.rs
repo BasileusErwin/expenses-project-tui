@@ -26,4 +26,3 @@ pub struct MonthByYear {
   pub year: String,
   pub months: Vec<String>,
 }
-

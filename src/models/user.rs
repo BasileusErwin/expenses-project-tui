@@ -9,4 +9,3 @@ pub struct UserModel {
   pub last_name: String,
   pub password: String,
 }
-

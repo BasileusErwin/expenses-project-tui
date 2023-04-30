@@ -58,4 +58,3 @@ pub async fn login(
 
   Ok(data.data.unwrap())
 }
-
