@@ -26,15 +26,16 @@ pub mod utils;
 pub mod states;
 
 fn load_config() -> io::Result<Config> {
+  let home = env::var("HOME").unwrap();
   let path = match env::var("ENV") {
     Ok(env) => {
       if let "DEV" = &*env {
-        "config.dev.json"
+        String::from( "config.dev.json")
       } else {
-        "config.json"
+        format!("{}/.config/expenses/{}", home, "config.json")
       }
     }
-    Err(_) => "config.json",
+    Err(_) => format!("{}/.config/expenses/{}", home, "config.json")
   };
 
   let file = File::open(path)?;
